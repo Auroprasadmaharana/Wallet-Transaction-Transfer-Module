@@ -1,128 +1,62 @@
-# Wallet Transaction & Transfer Module
+Wallet Transfer Project
 
-A production-grade backend service built with Node.js, Express, TypeScript, and Prisma ORM for wallet management, atomic peer-to-peer transfers, transaction history, and financial metrics.
+This is a small backend project I built for wallets and sending money between users. It uses Node.js, Express, TypeScript and Prisma.
 
----
+What it does
+Wallets: A user can create a wallet (default currency is USD). Each user can have only one active wallet per currency. A wallet can be ACTIVE, INACTIVE or FROZEN.
+Add money: You can put money into an active wallet. The amount must be more than 0 and can have at most 2 decimal places. Each deposit is saved as a CREDIT/DEPOSIT transaction.
+Transfer money: You can send money from one user to another. Before sending, it checks that:
+both wallets exist and are ACTIVE
+the amount is valid
+the sender has enough balance
+the sender and receiver are different people
+both wallets use the same currency
+If everything is fine, the sender's balance goes down, the receiver's goes up, and both sides get a transaction record (DEBIT and CREDIT) linked by one reference ID.
+Transaction history: You can see a wallet's transactions with pages (page, limit). You can filter by type, category, status and dates, and sort by date or amount.
+Wallet summary: Shows the current balance, total credited, total debited, net flow and number of transactions.
+Safety stuff:
+No deadlocks: wallets are always locked in the same order (sorted by ID).
+No double spending: balance checks and updates happen in one serializable transaction.
+Idempotency: send an optional Idempotency-Key header on /add-money and /transfer so a retry doesn't repeat the payment.
+Login with JWT and bcrypt passwords.
+Swagger docs at /api-docs.
+Tech used
 
-## Features
+Node.js 20+, TypeScript, Express, Prisma, SQLite (local) or PostgreSQL (production/Docker), Zod for validation, Jest and Supertest for tests, JWT and bcryptjs for auth, Swagger for docs.
 
-### 1. Wallet Management
-- **Create Wallet**: Create a wallet for a user with currency (default `USD`) and initial balance.
-- **Single Active Wallet Rule**: Enforces one active wallet per user per currency.
-- **Wallet Status**: Supports `ACTIVE`, `INACTIVE`, and `FROZEN` states.
-
-### 2. Add Money (Deposit)
-- Deposit funds into active wallets with validation (`amount > 0`, max 2 decimal places).
-- Creates an atomic `CREDIT` / `DEPOSIT` transaction record.
-
-### 3. Transfer Money
-- Atomic peer-to-peer transfers between two users.
-- Validates:
-  - Sender and receiver wallet existence
-  - `ACTIVE` status on both wallets
-  - Amount validity and decimal precision
-  - Sufficient sender balance
-  - Sender and receiver are distinct users (no self-transfers)
-  - Currency matching
-- Atomically decrements sender balance, increments receiver balance, and records sender `DEBIT` and receiver `CREDIT` transactions linked with a unique `referenceId`.
-
-### 4. Transaction History
-- Query wallet transactions with pagination (`page`, `limit`).
-- Filters by `type` (`CREDIT` / `DEBIT`), `category`, `status`, and date ranges (`fromDate`, `toDate`).
-- Supports custom sorting (`createdAt`, `amount`, `asc`/`desc`).
-
-### 5. Wallet Summary & Metrics
-- Calculates current available balance, total credited amount, total debited amount, net flow, and total transaction count.
-
-### 6. Concurrency & Reliability
-- **Deadlock Prevention**: Wallets are accessed in lexicographical order by ID before acquiring transaction locks, eliminating circular wait conditions during concurrent cross-transfers.
-- **Race Condition Protection**: Serializable database transactions ensure balance checks and mutations are atomic, preventing double-spending and negative balances.
-- **Idempotency**: Optional `Idempotency-Key` header on mutating endpoints (`/add-money`, `/transfer`) to prevent duplicate transactions on network retries.
-- **JWT Authentication**: User registration, login with bcrypt password hashing, and token verification.
-- **Swagger Documentation**: Interactive API documentation at `/api-docs`.
-
----
-
-## Tech Stack
-
-- **Runtime**: Node.js 20+
-- **Language**: TypeScript
-- **Framework**: Express.js
-- **ORM**: Prisma ORM
-- **Database**: SQLite (default local development) / PostgreSQL (production & Docker)
-- **Validation**: Zod
-- **Testing**: Jest, Supertest
-- **Auth**: JWT, bcryptjs
-- **Documentation**: Swagger / OpenAPI 3.0
-
----
-
-## Architecture
-
-```
+Folder layout
 src/
-├── app.ts                         # Express application setup and middlewares
-├── server.ts                      # Server bootstrap and graceful shutdown
-├── config/
-│   ├── env.config.ts              # Validated environment configuration
-│   ├── database.ts                # Prisma database client singleton
-│   ├── logger.ts                  # Application logger (Winston)
-│   └── redis.ts                   # Cache & idempotency store
-├── middlewares/
-│   ├── auth.middleware.ts         # JWT authentication
-│   ├── validate.middleware.ts     # Zod request validator
-│   ├── idempotency.middleware.ts  # Idempotency header handler
-│   ├── error.middleware.ts        # Centralized error handler
-│   └── logger.middleware.ts       # HTTP request logger
-├── modules/
-│   ├── auth/                      # Authentication routes, controller, service, dto
-│   ├── wallet/                    # Wallet routes, controller, service, repository, dto
-│   └── transaction/               # Transaction routes, controller, service, dto
-├── docs/
-│   └── swagger.ts                 # Swagger / OpenAPI specification
-├── prisma/
-│   ├── schema.prisma              # Database schema
-│   └── seed.ts                    # Seeder script
-└── public/
-    ├── index.html                 # Interactive Web Dashboard for testing
-    └── postman_collection.json    # Postman collection
-```
+  app.ts           - express setup
+  server.ts        - starts the server
+  config/          - env, database, logger, redis
+  middlewares/     - auth, validation, idempotency, errors, logging
+  modules/         - auth, wallet, transaction
+  docs/swagger.ts  - api docs
+  prisma/          - schema and seed
+  public/          - test dashboard and postman collection
+How to run it
 
----
+You need Node 20 or newer, npm 10 or newer, and Git.
 
-## Getting Started & Setup Instructions
+1. Clone and install
 
-### Prerequisites
-- [Node.js](https://nodejs.org/) >= 20.x
-- [npm](https://www.npmjs.com/) >= 10.x
-- Git
-
----
-
-### Step 1: Clone the Repository & Install Dependencies
-
-```bash
+bash
 git clone <repository-url>
 cd "Wallet Transaction & Transfer Module"
 npm install
-```
 
----
+2. Set up the env file
 
-### Step 2: Configure Environment Variables
-
-Copy the `.env.example` file to create your `.env` configuration:
-
-```bash
-# On Linux / macOS / Git Bash
+bash
+# Linux / macOS / Git Bash
 cp .env.example .env
 
-# On Windows PowerShell
+# Windows PowerShell
 Copy-Item .env.example .env
-```
 
-Default configuration in `.env`:
-```env
+The default .env:
+
+env
 PORT=3000
 NODE_ENV=development
 DATABASE_URL="file:./dev.db?connection_limit=1&timeout=20000"
@@ -131,137 +65,77 @@ JWT_EXPIRES_IN=24h
 REDIS_URL=redis://localhost:6379
 REDIS_ENABLED=false
 LOG_LEVEL=info
-```
 
----
+(Change the JWT secret before using this in production!)
 
-### Step 3: Initialize Database & Seed Demo Data
+3. Set up the database and add demo data
 
-Run Prisma migrations/schema push and seed initial test accounts:
-
-```bash
-# Generate Prisma Client
+bash
 npm run prisma:generate
-
-# Push schema to SQLite database (dev.db)
 npm run prisma:push
-
-# Populate database with seed users and test wallets
 npm run seed
-```
 
-**Seed Accounts Created:**
-- **Alice**: Initial Balance: `$1,500.00` (Email: `alice@example.com`, Password: `Password123!`)
-- **Bob**: Initial Balance: `$500.00` (Email: `bob@example.com`, Password: `Password123!`)
-- **Charlie**: Initial Balance: `$200.00` (Email: `charlie@example.com`, Password: `Password123!`)
+Demo users (all use the password Password123!):
 
----
+Alice, $1,500.00, alice@example.com
+Bob, $500.00, bob@example.com
+Charlie, $200.00, charlie@example.com
 
-### Step 4: Run the Development Server
+4. Start the server
 
-```bash
+bash
 npm run dev
-```
 
-The server will start on `http://localhost:3000`.
+It runs at http://localhost:3000.
 
----
+5. Open these
 
-### Step 5: Access the Application & Tools
+Dashboard: http://localhost:3000 (test deposits and transfers)
+Swagger docs: http://localhost:3000/api-docs
+Health check: http://localhost:3000/health
+Running with Docker
+bash
+docker compose up --build -d   # start
+docker compose ps              # check status
+docker compose logs -f         # see logs
+docker compose down            # stop
+Tests
+bash
+npm test                  # everything
+npm run test:unit         # unit tests
+npm run test:integration  # integration tests
+npm run test:coverage     # coverage report
+API list
 
-| Interface | URL | Description |
-|---|---|---|
-| **Web Dashboard** | [http://localhost:3000](http://localhost:3000) | Interactive GUI to test deposits, transfers, and real-time wallet balances |
-| **Swagger API Docs** | [http://localhost:3000/api-docs](http://localhost:3000/api-docs) | OpenAPI interactive API documentation & sandbox |
-| **Health Check** | [http://localhost:3000/health](http://localhost:3000/health) | System and database health status endpoint |
+Auth
 
----
+POST /api/v1/auth/register - sign up
+POST /api/v1/auth/login - log in
+GET /api/v1/auth/me - my profile (needs Bearer token)
 
-## Running with Docker (PostgreSQL + Redis)
+Wallets
 
-To run the complete stack in containers:
+POST /api/v1/wallets - create wallet
+POST /api/v1/wallets/:walletId/add-money - deposit
+POST /api/v1/wallets/:walletId/transfer - transfer
+GET /api/v1/wallets/:walletId - get one wallet
+GET /api/v1/wallets/user/:userId - get a user's wallets
+GET /api/v1/wallets/:walletId/summary - wallet summary
+PATCH /api/v1/wallets/:walletId/status - change status (ACTIVE / FROZEN / INACTIVE)
 
-```bash
-# Start all containers
-docker compose up --build -d
+Transactions
 
-# Check status
-docker compose ps
+GET /api/v1/transactions/wallet/:walletId - list transactions. Query options: page, limit, type, category, fromDate, toDate, sortBy, sortOrder
+GET /api/v1/transactions/:transactionId - one transaction
+How I avoided deadlocks and double spending
 
-# View logs
-docker compose logs -f
+Deadlocks: Say two transfers happen at the same time, A to B and B to A. If each one locks its sender first, they can get stuck waiting for each other. To fix that, I sort the two wallet IDs and always lock in that order:
 
-# Stop containers
-docker compose down
-```
-
----
-
-## Testing
-
-Run unit tests, integration tests, and concurrency race-condition tests:
-
-```bash
-# Run all tests
-npm test
-
-# Run unit tests
-npm run test:unit
-
-# Run integration tests
-npm run test:integration
-
-# Run code coverage report
-npm run test:coverage
-```
-
----
-
-## API Reference
-
-### Auth Endpoints
-| Method | Endpoint | Description | Auth Required |
-|---|---|---|---|
-| `POST` | `/api/v1/auth/register` | Register a new user | No |
-| `POST` | `/api/v1/auth/login` | Login with email and password | No |
-| `GET` | `/api/v1/auth/me` | Get current user profile | Yes (`Bearer <token>`) |
-
-### Wallet Endpoints
-| Method | Endpoint | Description | Headers |
-|---|---|---|---|
-| `POST` | `/api/v1/wallets` | Create wallet | `Authorization` (optional) |
-| `POST` | `/api/v1/wallets/:walletId/add-money` | Deposit funds | `Idempotency-Key` (optional) |
-| `POST` | `/api/v1/wallets/:walletId/transfer` | Transfer funds to another wallet | `Idempotency-Key` (optional) |
-| `GET` | `/api/v1/wallets/:walletId` | Get wallet by ID | `Authorization` (optional) |
-| `GET` | `/api/v1/wallets/user/:userId` | Get user's wallets | `Authorization` (optional) |
-| `GET` | `/api/v1/wallets/:walletId/summary` | Get wallet financial summary | `Authorization` (optional) |
-| `PATCH` | `/api/v1/wallets/:walletId/status` | Update wallet status (`ACTIVE`/`FROZEN`/`INACTIVE`) | `Authorization` (optional) |
-
-### Transaction Endpoints
-| Method | Endpoint | Query Parameters | Description |
-|---|---|---|---|
-| `GET` | `/api/v1/transactions/wallet/:walletId` | `page`, `limit`, `type`, `category`, `fromDate`, `toDate`, `sortBy`, `sortOrder` | List transactions with filters & pagination |
-| `GET` | `/api/v1/transactions/:transactionId` | None | Get single transaction details |
-
----
-
-## Concurrency and Deadlock Prevention Details
-
-### Deterministic Lock Ordering
-When two concurrent requests transfer money between the same two wallets in opposite directions:
-- **Transfer 1**: Wallet A $\rightarrow$ Wallet B
-- **Transfer 2**: Wallet B $\rightarrow$ Wallet A
-
-If locks are acquired in order of sender first, a circular wait deadlock can occur. To avoid this, the repository sorts wallet IDs before locking:
-```typescript
+typescript
 const [firstId, secondId] = [senderWalletId, receiverWalletId].sort();
-```
-Both operations always acquire locks in the same deterministic sequence, guaranteeing deadlock freedom.
 
-### Double-Spending & Race Condition Protection
-Transfer balance validations and updates execute inside an atomic database transaction. If simultaneous requests exceed the available balance, only transactions that fit within the balance succeed; remaining concurrent requests fail with `422 INSUFFICIENT_FUNDS`.
+Double spending: The balance check and the update happen inside one database transaction. If many requests come in together and the balance can't cover all of them, only the ones that fit will go through. The rest fail with 422 INSUFFICIENT_FUNDS.
 
----
+License
 
-## License
 MIT
