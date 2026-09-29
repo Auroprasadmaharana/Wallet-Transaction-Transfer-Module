@@ -136,6 +136,3 @@ const [firstId, secondId] = [senderWalletId, receiverWalletId].sort();
 
 Double spending: The balance check and the update happen inside one database transaction. If many requests come in together and the balance can't cover all of them, only the ones that fit will go through. The rest fail with 422 INSUFFICIENT_FUNDS.
 
-License
-
-MIT
