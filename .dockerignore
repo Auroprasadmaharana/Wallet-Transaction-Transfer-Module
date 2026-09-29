@@ -1,0 +1,8 @@
+node_modules
+dist
+.git
+.env
+dev.db
+dev.db-journal
+coverage
+*.log

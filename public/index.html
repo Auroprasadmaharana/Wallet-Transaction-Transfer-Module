@@ -1,0 +1,977 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Wallet Transaction & Transfer Hub</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-base: #0a0e17;
+      --bg-surface: #111827;
+      --bg-surface-elevated: #1e293b;
+      --border-color: rgba(255, 255, 255, 0.08);
+      --border-focus: #3b82f6;
+      --primary: #3b82f6;
+      --primary-hover: #2563eb;
+      --accent: #10b981;
+      --accent-glow: rgba(16, 185, 129, 0.2);
+      --danger: #ef4444;
+      --warning: #f59e0b;
+      --text-main: #f3f4f6;
+      --text-muted: #9ca3af;
+      --text-dim: #6b7280;
+      --radius-lg: 16px;
+      --radius-md: 10px;
+      --radius-sm: 6px;
+      --font-main: 'Plus Jakarta Sans', system-ui, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-base);
+      color: var(--text-main);
+      font-family: var(--font-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      line-height: 1.5;
+      background-image: 
+        radial-gradient(circle at 15% 15%, rgba(59, 130, 246, 0.08) 0%, transparent 40%),
+        radial-gradient(circle at 85% 85%, rgba(16, 185, 129, 0.06) 0%, transparent 40%);
+    }
+
+    header {
+      border-bottom: 1px solid var(--border-color);
+      background: rgba(17, 24, 39, 0.8);
+      backdrop-filter: blur(12px);
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .logo-icon {
+      width: 38px;
+      height: 38px;
+      background: linear-gradient(135deg, #3b82f6, #10b981);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      color: #fff;
+      font-size: 1.2rem;
+      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+    }
+
+    .brand h1 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    .brand span {
+      color: var(--accent);
+    }
+
+    .header-links {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .nav-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      border-radius: var(--radius-sm);
+      font-size: 0.875rem;
+      font-weight: 600;
+      text-decoration: none;
+      transition: all 0.2s ease;
+      cursor: pointer;
+    }
+
+    .nav-btn-docs {
+      background: rgba(59, 130, 246, 0.15);
+      color: #60a5fa;
+      border: 1px solid rgba(59, 130, 246, 0.3);
+    }
+
+    .nav-btn-docs:hover {
+      background: rgba(59, 130, 246, 0.25);
+    }
+
+    .nav-btn-postman {
+      background: rgba(245, 158, 11, 0.15);
+      color: #fbbf24;
+      border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+
+    .nav-btn-postman:hover {
+      background: rgba(245, 158, 11, 0.25);
+    }
+
+    .container {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 2rem;
+      width: 100%;
+      flex: 1;
+    }
+
+    .user-switcher {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 1rem 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .user-pills {
+      display: flex;
+      gap: 0.75rem;
+    }
+
+    .user-pill {
+      background: var(--bg-surface-elevated);
+      border: 1px solid var(--border-color);
+      color: var(--text-muted);
+      padding: 0.5rem 1.25rem;
+      border-radius: 999px;
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .user-pill.active {
+      background: var(--primary);
+      color: #fff;
+      border-color: var(--primary);
+      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+    }
+
+    .grid-dashboard {
+      display: grid;
+      grid-template-columns: 1fr 2fr;
+      gap: 2rem;
+      margin-bottom: 2rem;
+    }
+
+    @media (max-width: 960px) {
+      .grid-dashboard {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 1.5rem;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+    }
+
+    .card-title {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .wallet-card {
+      background: linear-gradient(145deg, #1e293b, #0f172a);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .wallet-card::after {
+      content: '';
+      position: absolute;
+      top: -50%;
+      right: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle, rgba(59, 130, 246, 0.08) 0%, transparent 60%);
+      pointer-events: none;
+    }
+
+    .balance-badge {
+      display: inline-block;
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 0.25rem 0.5rem;
+      border-radius: var(--radius-sm);
+      background: rgba(16, 185, 129, 0.15);
+      color: var(--accent);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+
+    .balance-display {
+      font-size: 2.75rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      margin: 0.75rem 0 1.25rem;
+      color: #fff;
+    }
+
+    .wallet-meta {
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      color: var(--text-dim);
+      background: rgba(0, 0, 0, 0.3);
+      padding: 0.5rem 0.75rem;
+      border-radius: var(--radius-sm);
+      margin-bottom: 1.5rem;
+      word-break: break-all;
+    }
+
+    .action-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+    }
+
+    .btn {
+      padding: 0.75rem 1rem;
+      border-radius: var(--radius-md);
+      font-size: 0.9rem;
+      font-weight: 600;
+      border: none;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      transition: all 0.2s ease;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: #fff;
+    }
+
+    .btn-primary:hover {
+      background: var(--primary-hover);
+      box-shadow: 0 4px 14px rgba(59, 130, 246, 0.4);
+    }
+
+    .btn-success {
+      background: var(--accent);
+      color: #062419;
+      font-weight: 700;
+    }
+
+    .btn-success:hover {
+      background: #059669;
+      color: #fff;
+    }
+
+    .btn-outline {
+      background: transparent;
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+    }
+
+    .btn-outline:hover {
+      background: var(--bg-surface-elevated);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    /* Summary Stat Cards */
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1rem;
+    }
+
+    @media (max-width: 768px) {
+      .summary-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    .stat-box {
+      background: var(--bg-surface-elevated);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 1.25rem;
+    }
+
+    .stat-label {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .stat-value {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-top: 0.25rem;
+    }
+
+    .stat-value.green {
+      color: var(--accent);
+    }
+
+    .stat-value.red {
+      color: var(--danger);
+    }
+
+    .stat-value.blue {
+      color: #60a5fa;
+    }
+
+    /* Transactions Section */
+    .table-header-controls {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.25rem;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .filter-tabs {
+      display: flex;
+      gap: 0.5rem;
+      background: var(--bg-surface-elevated);
+      padding: 0.25rem;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-color);
+    }
+
+    .filter-tab {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      padding: 0.4rem 0.9rem;
+      border-radius: var(--radius-sm);
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .filter-tab.active {
+      background: var(--primary);
+      color: #fff;
+    }
+
+    .table-responsive {
+      overflow-x: auto;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-color);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 0.875rem;
+    }
+
+    th {
+      background: var(--bg-surface-elevated);
+      color: var(--text-muted);
+      font-weight: 600;
+      padding: 0.85rem 1rem;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    td {
+      padding: 0.85rem 1rem;
+      border-bottom: 1px solid var(--border-color);
+      color: var(--text-main);
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    tr:hover td {
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .type-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      padding: 0.25rem 0.6rem;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      font-weight: 700;
+    }
+
+    .type-badge.credit {
+      background: rgba(16, 185, 129, 0.15);
+      color: var(--accent);
+    }
+
+    .type-badge.debit {
+      background: rgba(239, 68, 68, 0.15);
+      color: var(--danger);
+    }
+
+    .mono-cell {
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      color: var(--text-dim);
+    }
+
+    /* Modal Styles */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(8px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      padding: 1rem;
+    }
+
+    .modal-backdrop.open {
+      display: flex;
+    }
+
+    .modal {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      width: 100%;
+      max-width: 480px;
+      padding: 2rem;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+    }
+
+    .modal-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+    }
+
+    .close-btn {
+      background: none;
+      border: none;
+      color: var(--text-dim);
+      font-size: 1.5rem;
+      cursor: pointer;
+    }
+
+    .close-btn:hover {
+      color: #fff;
+    }
+
+    .form-group {
+      margin-bottom: 1.25rem;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: 0.5rem;
+    }
+
+    .form-input, .form-select {
+      width: 100%;
+      background: var(--bg-surface-elevated);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 0.75rem 1rem;
+      color: #fff;
+      font-family: inherit;
+      font-size: 0.95rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .form-input:focus, .form-select:focus {
+      border-color: var(--border-focus);
+    }
+
+    /* Notification Toast */
+    #toast {
+      position: fixed;
+      bottom: 2rem;
+      right: 2rem;
+      padding: 1rem 1.5rem;
+      border-radius: var(--radius-md);
+      font-weight: 600;
+      display: none;
+      z-index: 200;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+      animation: slideIn 0.3s ease;
+    }
+
+    #toast.success {
+      background: #065f46;
+      color: #6ee7b7;
+      border: 1px solid #059669;
+      display: block;
+    }
+
+    #toast.error {
+      background: #7f1d1d;
+      color: #fca5a5;
+      border: 1px solid #dc2626;
+      display: block;
+    }
+
+    @keyframes slideIn {
+      from { transform: translateY(20px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="brand">
+      <div class="logo-icon">W</div>
+      <div>
+        <h1>Wallet <span>Transfer</span> Module</h1>
+      </div>
+    </div>
+    <div class="header-links">
+      <a href="/api-docs" target="_blank" class="nav-btn nav-btn-docs">Swagger Docs</a>
+      <a href="/postman_collection.json" download="Wallet_API.postman_collection.json" class="nav-btn nav-btn-postman">Postman Collection</a>
+    </div>
+  </header>
+
+  <main class="container">
+    <!-- User Switcher -->
+    <section class="user-switcher">
+      <div>
+        <div style="font-size: 0.8rem; color: var(--text-dim); text-transform: uppercase; font-weight: 700;">Active User</div>
+        <div style="font-weight: 600;" id="current-user-display">Loading...</div>
+      </div>
+      <div class="user-pills" id="user-pills-container">
+        <!-- Injected via JS -->
+      </div>
+    </section>
+
+    <!-- Dashboard Top Grid -->
+    <div class="grid-dashboard">
+      <!-- Wallet Card -->
+      <section class="card wallet-card">
+        <div class="card-title">
+          <span>Active Wallet</span>
+          <span class="balance-badge" id="wallet-status">ACTIVE</span>
+        </div>
+        <div class="stat-label">Current Available Balance</div>
+        <div class="balance-display" id="wallet-balance">$0.00</div>
+        <div class="wallet-meta">
+          Wallet ID: <span id="wallet-id-display">Loading...</span>
+        </div>
+        <div class="action-grid">
+          <button class="btn btn-success" onclick="openAddMoneyModal()">+ Add Money</button>
+          <button class="btn btn-primary" onclick="openTransferModal()">Transfer Money</button>
+        </div>
+      </section>
+
+      <!-- Summary Analytics -->
+      <section class="card">
+        <div class="card-title">
+          <span>Financial Summary</span>
+          <button class="btn btn-outline" style="padding: 0.3rem 0.75rem; font-size: 0.8rem;" onclick="refreshDashboard()">Refresh</button>
+        </div>
+        <div class="summary-grid">
+          <div class="stat-box">
+            <div class="stat-label">Total Credited</div>
+            <div class="stat-value green" id="summary-credited">$0.00</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">Total Debited</div>
+            <div class="stat-value red" id="summary-debited">$0.00</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">Net Balance</div>
+            <div class="stat-value blue" id="summary-net">$0.00</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">Transactions</div>
+            <div class="stat-value" id="summary-tx-count">0</div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- Transactions Table -->
+    <section class="card">
+      <div class="table-header-controls">
+        <h2 style="font-size: 1.1rem; font-weight: 700;">Transaction Ledger & Audit Trail</h2>
+        <div class="filter-tabs">
+          <button class="filter-tab active" onclick="setFilter('ALL', this)">All</button>
+          <button class="filter-tab" onclick="setFilter('CREDIT', this)">Credits</button>
+          <button class="filter-tab" onclick="setFilter('DEBIT', this)">Debits</button>
+        </div>
+      </div>
+
+      <div class="table-responsive">
+        <table>
+          <thead>
+            <tr>
+              <th>Type</th>
+              <th>Amount</th>
+              <th>Category</th>
+              <th>Balance Before</th>
+              <th>Balance After</th>
+              <th>Reference / Trace ID</th>
+              <th>Date & Time</th>
+            </tr>
+          </thead>
+          <tbody id="transaction-rows">
+            <tr>
+              <td colspan="7" style="text-align: center; color: var(--text-dim); padding: 2rem;">Loading transactions...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <!-- Add Money Modal -->
+  <div class="modal-backdrop" id="addMoneyModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 class="modal-title">Deposit / Add Money</h3>
+        <button class="close-btn" onclick="closeModal('addMoneyModal')">&times;</button>
+      </div>
+      <form id="addMoneyForm" onsubmit="handleAddMoney(event)">
+        <div class="form-group">
+          <label class="form-label">Amount (USD)</label>
+          <input type="number" step="0.01" min="0.01" max="1000000" class="form-input" id="addAmount" placeholder="e.g. 250.00" required />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Description (Optional)</label>
+          <input type="text" class="form-input" id="addDescription" placeholder="e.g. Direct Deposit / Bonus" />
+        </div>
+        <button type="submit" class="btn btn-success" style="width: 100%;">Confirm Deposit</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Transfer Money Modal -->
+  <div class="modal-backdrop" id="transferModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 class="modal-title">Transfer Funds</h3>
+        <button class="close-btn" onclick="closeModal('transferModal')">&times;</button>
+      </div>
+      <form id="transferForm" onsubmit="handleTransfer(event)">
+        <div class="form-group">
+          <label class="form-label">Recipient User / Wallet</label>
+          <select class="form-select" id="transferReceiver" required>
+            <!-- Injected via JS -->
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Transfer Amount (USD)</label>
+          <input type="number" step="0.01" min="0.01" max="1000000" class="form-input" id="transferAmount" placeholder="e.g. 150.00" required />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Description / Note (Optional)</label>
+          <input type="text" class="form-input" id="transferDescription" placeholder="e.g. Payment for project" />
+        </div>
+        <button type="submit" class="btn btn-primary" style="width: 100%;">Execute Atomic Transfer</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="toast"></div>
+
+  <script>
+    // Demo State
+    const DEMO_USERS = [
+      { name: 'Alice Smith', email: 'alice@example.com', password: 'Password123!' },
+      { name: 'Bob Johnson', email: 'bob@example.com', password: 'Password123!' },
+      { name: 'Charlie Brown', email: 'charlie@example.com', password: 'Password123!' }
+    ];
+
+    let currentActiveIndex = 0;
+    let authSessions = [];
+    let currentFilter = 'ALL';
+
+    function showToast(message, isError = false) {
+      const toast = document.getElementById('toast');
+      toast.textContent = message;
+      toast.className = isError ? 'error' : 'success';
+      setTimeout(() => {
+        toast.className = '';
+      }, 4000);
+    }
+
+    async function initializeApp() {
+      // Register or Login Demo Users
+      authSessions = [];
+      for (const u of DEMO_USERS) {
+        try {
+          // Attempt login
+          let res = await fetch('/api/v1/auth/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: u.email, password: u.password })
+          });
+          let json = await res.json();
+          if (!json.success) {
+            // Register
+            res = await fetch('/api/v1/auth/register', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(u)
+            });
+            json = await res.json();
+          }
+
+          const token = json.data.token;
+          const user = json.data.user;
+
+          // Fetch or create wallet
+          let wRes = await fetch(`/api/v1/wallets/user/${user.id}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          let wJson = await wRes.json();
+          let wallet = wJson.data && wJson.data.length > 0 ? wJson.data[0] : null;
+
+          if (!wallet) {
+            const createWRes = await fetch('/api/v1/wallets', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+              body: JSON.stringify({ currency: 'USD', initialBalance: u.name.includes('Alice') ? 1000 : 500 })
+            });
+            const created = await createWRes.json();
+            wallet = created.data;
+          }
+
+          authSessions.push({ user, token, wallet });
+        } catch (err) {
+          console.error('Init user error:', err);
+        }
+      }
+
+      renderUserPills();
+      await refreshDashboard();
+    }
+
+    function renderUserPills() {
+      const container = document.getElementById('user-pills-container');
+      container.innerHTML = authSessions.map((session, idx) => `
+        <button class="user-pill ${idx === currentActiveIndex ? 'active' : ''}" onclick="switchUser(${idx})">
+          ${session.user.name}
+        </button>
+      `).join('');
+    }
+
+    async function switchUser(idx) {
+      currentActiveIndex = idx;
+      renderUserPills();
+      await refreshDashboard();
+    }
+
+    async function refreshDashboard() {
+      const active = authSessions[currentActiveIndex];
+      if (!active) return;
+
+      document.getElementById('current-user-display').textContent = `${active.user.name} (${active.user.email})`;
+
+      // Fetch fresh wallet details
+      const wRes = await fetch(`/api/v1/wallets/${active.wallet.id}`, {
+        headers: { 'Authorization': `Bearer ${active.token}` }
+      });
+      const wJson = await wRes.json();
+      if (wJson.success) {
+        active.wallet = wJson.data;
+        document.getElementById('wallet-balance').textContent = `$${active.wallet.balance.toFixed(2)}`;
+        document.getElementById('wallet-id-display').textContent = active.wallet.id;
+        document.getElementById('wallet-status').textContent = active.wallet.status;
+      }
+
+      // Fetch Summary
+      const sumRes = await fetch(`/api/v1/wallets/${active.wallet.id}/summary`, {
+        headers: { 'Authorization': `Bearer ${active.token}` }
+      });
+      const sumJson = await sumRes.json();
+      if (sumJson.success) {
+        const sum = sumJson.data;
+        document.getElementById('summary-credited').textContent = `$${sum.totalCredited.toFixed(2)}`;
+        document.getElementById('summary-debited').textContent = `$${sum.totalDebited.toFixed(2)}`;
+        document.getElementById('summary-net').textContent = `$${sum.currentBalance.toFixed(2)}`;
+        document.getElementById('summary-tx-count').textContent = sum.totalTransactions;
+      }
+
+      // Fetch Transactions
+      let txUrl = `/api/v1/transactions/wallet/${active.wallet.id}?page=1&limit=20`;
+      if (currentFilter !== 'ALL') {
+        txUrl += `&type=${currentFilter}`;
+      }
+
+      const txRes = await fetch(txUrl, {
+        headers: { 'Authorization': `Bearer ${active.token}` }
+      });
+      const txJson = await txRes.json();
+
+      const tbody = document.getElementById('transaction-rows');
+      if (txJson.success && txJson.data.length > 0) {
+        tbody.innerHTML = txJson.data.map(tx => `
+          <tr>
+            <td>
+              <span class="type-badge ${tx.type === 'CREDIT' ? 'credit' : 'debit'}">
+                ${tx.type === 'CREDIT' ? 'CREDIT' : 'DEBIT'}
+              </span>
+            </td>
+            <td style="font-weight: 700; color: ${tx.type === 'CREDIT' ? 'var(--accent)' : 'var(--danger)'}">
+              ${tx.type === 'CREDIT' ? '+' : '-'}$${tx.amount.toFixed(2)}
+            </td>
+            <td><span style="font-size: 0.8rem; background: var(--bg-surface-elevated); padding: 0.2rem 0.5rem; border-radius: 4px;">${tx.category}</span></td>
+            <td class="mono-cell">$${tx.balanceBefore.toFixed(2)}</td>
+            <td class="mono-cell">$${tx.balanceAfter.toFixed(2)}</td>
+            <td class="mono-cell" title="${tx.referenceId || '-'}">${tx.referenceId ? tx.referenceId.slice(0, 16) + '...' : '-'}</td>
+            <td style="color: var(--text-muted); font-size: 0.8rem;">${new Date(tx.createdAt).toLocaleString()}</td>
+          </tr>
+        `).join('');
+      } else {
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--text-dim); padding: 2rem;">No transactions found</td></tr>`;
+      }
+    }
+
+    function setFilter(filter, btn) {
+      currentFilter = filter;
+      document.querySelectorAll('.filter-tab').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      refreshDashboard();
+    }
+
+    function openAddMoneyModal() {
+      document.getElementById('addAmount').value = '';
+      document.getElementById('addDescription').value = '';
+      document.getElementById('addMoneyModal').classList.add('open');
+    }
+
+    function openTransferModal() {
+      const active = authSessions[currentActiveIndex];
+      const select = document.getElementById('transferReceiver');
+      select.innerHTML = authSessions
+        .filter((_, idx) => idx !== currentActiveIndex)
+        .map(s => `<option value="${s.wallet.id}">${s.user.name} (Wallet: ${s.wallet.id.slice(0, 8)}...)</option>`)
+        .join('');
+
+      document.getElementById('transferAmount').value = '';
+      document.getElementById('transferDescription').value = '';
+      document.getElementById('transferModal').classList.add('open');
+    }
+
+    function closeModal(id) {
+      document.getElementById(id).classList.remove('open');
+    }
+
+    async function handleAddMoney(e) {
+      e.preventDefault();
+      const active = authSessions[currentActiveIndex];
+      const amount = parseFloat(document.getElementById('addAmount').value);
+      const description = document.getElementById('addDescription').value;
+
+      try {
+        const res = await fetch(`/api/v1/wallets/${active.wallet.id}/add-money`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${active.token}`,
+            'Idempotency-Key': 'add-' + Date.now()
+          },
+          body: JSON.stringify({ amount, description })
+        });
+
+        const json = await res.json();
+        if (json.success) {
+          showToast(`Successfully deposited $${amount.toFixed(2)}`);
+          closeModal('addMoneyModal');
+          await refreshDashboard();
+        } else {
+          showToast(json.message || json.error?.message, true);
+        }
+      } catch (err) {
+        showToast('Error executing deposit', true);
+      }
+    }
+
+    async function handleTransfer(e) {
+      e.preventDefault();
+      const active = authSessions[currentActiveIndex];
+      const receiverWalletId = document.getElementById('transferReceiver').value;
+      const amount = parseFloat(document.getElementById('transferAmount').value);
+      const description = document.getElementById('transferDescription').value;
+
+      try {
+        const res = await fetch(`/api/v1/wallets/${active.wallet.id}/transfer`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${active.token}`,
+            'Idempotency-Key': 'transfer-' + Date.now()
+          },
+          body: JSON.stringify({ receiverWalletId, amount, description })
+        });
+
+        const json = await res.json();
+        if (json.success) {
+          showToast(`Transferred $${amount.toFixed(2)} successfully!`);
+          closeModal('transferModal');
+          await refreshDashboard();
+        } else {
+          showToast(json.message || json.error?.message, true);
+        }
+      } catch (err) {
+        showToast('Error executing transfer', true);
+      }
+    }
+
+    // Auto-initialize on page load
+    window.addEventListener('DOMContentLoaded', initializeApp);
+  </script>
+</body>
+</html>

@@ -1,0 +1,64 @@
+version: '3.8'
+
+services:
+  # Node.js API Service
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: wallet_api
+    restart: unless-stopped
+    ports:
+      - '3000:3000'
+    environment:
+      - PORT=3000
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://postgres:postgres123@postgres:5432/wallet_db?schema=public
+      - JWT_SECRET=super_secret_production_jwt_wallet_key_2026
+      - JWT_EXPIRES_IN=24h
+      - REDIS_URL=redis://redis:6379
+      - REDIS_ENABLED=true
+      - LOG_LEVEL=info
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  # PostgreSQL Database Service
+  postgres:
+    image: postgres:16-alpine
+    container_name: wallet_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres123
+      POSTGRES_DB: wallet_db
+    ports:
+      - '5432:5432'
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres -d wallet_db']
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # Redis In-Memory Cache for Financial Idempotency
+  redis:
+    image: redis:7-alpine
+    container_name: wallet_redis
+    restart: unless-stopped
+    ports:
+      - '6379:6379'
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  pgdata:
+  redisdata:

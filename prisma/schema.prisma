@@ -1,0 +1,102 @@
+// Prisma schema for Wallet Transaction & Transfer Module
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum WalletStatus {
+  ACTIVE
+  INACTIVE
+  FROZEN
+}
+
+enum TransactionType {
+  CREDIT
+  DEBIT
+}
+
+enum TransactionCategory {
+  DEPOSIT
+  TRANSFER_IN
+  TRANSFER_OUT
+  WITHDRAWAL
+}
+
+enum TransactionStatus {
+  PENDING
+  SUCCESS
+  FAILED
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  name      String
+  password  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  wallets   Wallet[]
+
+  @@map("users")
+}
+
+model Wallet {
+  id           String        @id @default(uuid())
+  userId       String
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  balance      Float         @default(0.0)
+  currency     String        @default("USD")
+  status       WalletStatus  @default(ACTIVE)
+  version      Int           @default(0)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  transactions Transaction[]
+
+  @@unique([userId, currency], name: "user_currency_unique")
+  @@index([userId])
+  @@map("wallets")
+}
+
+model Transaction {
+  id               String              @id @default(uuid())
+  walletId         String
+  wallet           Wallet              @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  amount           Float
+  type             TransactionType
+  category         TransactionCategory @default(DEPOSIT)
+  status           TransactionStatus   @default(SUCCESS)
+  balanceBefore    Float
+  balanceAfter     Float
+  referenceId      String?
+  senderWalletId   String?
+  receiverWalletId String?
+  description      String?
+  metadata         String?
+  createdAt        DateTime            @default(now())
+
+  @@index([walletId, createdAt])
+  @@index([walletId, type])
+  @@index([referenceId])
+  @@map("transactions")
+}
+
+model IdempotencyRecord {
+  id           String   @id @default(uuid())
+  key          String   @unique
+  userId       String?
+  requestPath  String
+  requestHash  String?
+  statusCode   Int
+  responseBody String
+  expiresAt    DateTime
+  createdAt    DateTime @default(now())
+
+  @@index([key])
+  @@index([expiresAt])
+  @@map("idempotency_records")
+}

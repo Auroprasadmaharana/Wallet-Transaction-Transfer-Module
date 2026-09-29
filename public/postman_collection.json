@@ -1,0 +1,115 @@
+{
+  "info": {
+    "_postman_id": "e44d32a1-1234-4567-89ab-cdef01234567",
+    "name": "Wallet Transaction & Transfer Module API",
+    "description": "Comprehensive Postman Collection for Wallet Transaction, Transfer, and Concurrency Testing",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:3000", "type": "string" },
+    { "key": "tokenAlice", "value": "", "type": "string" },
+    { "key": "tokenBob", "value": "", "type": "string" },
+    { "key": "walletIdAlice", "value": "", "type": "string" },
+    { "key": "walletIdBob", "value": "", "type": "string" }
+  ],
+  "item": [
+    {
+      "name": "1. Health Check",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/health"
+      }
+    },
+    {
+      "name": "2. Auth - Register Alice",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Alice Smith\",\n  \"email\": \"alice@example.com\",\n  \"password\": \"Password123!\"\n}"
+        },
+        "url": "{{baseUrl}}/api/v1/auth/register"
+      }
+    },
+    {
+      "name": "3. Auth - Login Alice",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"alice@example.com\",\n  \"password\": \"Password123!\"\n}"
+        },
+        "url": "{{baseUrl}}/api/v1/auth/login"
+      }
+    },
+    {
+      "name": "4. Wallet - Create Wallet",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{tokenAlice}}" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"currency\": \"USD\",\n  \"initialBalance\": 1000.00\n}"
+        },
+        "url": "{{baseUrl}}/api/v1/wallets"
+      }
+    },
+    {
+      "name": "5. Wallet - Add Money",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{tokenAlice}}" },
+          { "key": "Idempotency-Key", "value": "add-tx-12345" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"amount\": 500.00,\n  \"description\": \"Salary deposit\"\n}"
+        },
+        "url": "{{baseUrl}}/api/v1/wallets/{{walletIdAlice}}/add-money"
+      }
+    },
+    {
+      "name": "6. Wallet - Transfer Money",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{tokenAlice}}" },
+          { "key": "Idempotency-Key", "value": "transfer-tx-98765" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"receiverWalletId\": \"{{walletIdBob}}\",\n  \"amount\": 250.00,\n  \"description\": \"Payment transfer\"\n}"
+        },
+        "url": "{{baseUrl}}/api/v1/wallets/{{walletIdAlice}}/transfer"
+      }
+    },
+    {
+      "name": "7. Wallet - Summary",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{tokenAlice}}" }
+        ],
+        "url": "{{baseUrl}}/api/v1/wallets/{{walletIdAlice}}/summary"
+      }
+    },
+    {
+      "name": "8. Transaction History (Paginated & Filtered)",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{tokenAlice}}" }
+        ],
+        "url": "{{baseUrl}}/api/v1/transactions/wallet/{{walletIdAlice}}?page=1&limit=10&type=DEBIT"
+      }
+    }
+  ]
+}
